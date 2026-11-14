@@ -1,6 +1,8 @@
 import string
 
-from .search_utils import DEFAULT_SEARCH_LIMIT, Movie, load_movies
+from nltk.stem import PorterStemmer
+
+from .search_utils import DEFAULT_SEARCH_LIMIT, STOPWORDS_PATH, Movie, load_movies
 
 
 def search_command(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[Movie]:
@@ -31,6 +33,14 @@ def preprocess_text(text: str) -> str:
     return text
 
 
+def load_stopwords() -> list[str]:
+    with open(STOPWORDS_PATH, "r") as f:
+        return [preprocess_text(word) for word in f.read().splitlines()]
+
+
+STOPWORDS = load_stopwords()
+
+
 def tokenize_text(text: str) -> list[str]:
     text = preprocess_text(text)
     tokens = text.split()
@@ -38,4 +48,12 @@ def tokenize_text(text: str) -> list[str]:
     for token in tokens:
         if token:
             valid_tokens.append(token)
-    return valid_tokens
+    filtered_words = []
+    for word in valid_tokens:
+        if word not in STOPWORDS:
+            filtered_words.append(word)
+    stemmer = PorterStemmer()
+    stemmed_words = []
+    for word in filtered_words:
+        stemmed_words.append(stemmer.stem(word))
+    return stemmed_words

@@ -18,8 +18,8 @@ EmbeddingArray = NDArray[Any]
 
 
 class SemanticSearch:
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
-        self.model = SentenceTransformer(model_name)
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2", device: str = "cpu") -> None:
+        self.model = SentenceTransformer(model_name, device=device)
         self.embeddings: EmbeddingArray | None = None
         self.documents: list[Movie] | None = None
         self.document_map: dict[int, Movie] = {}
@@ -50,7 +50,7 @@ class SemanticSearch:
 
         if os.path.exists(MOVIE_EMBEDDINGS_PATH):
             self.embeddings = np.load(MOVIE_EMBEDDINGS_PATH)
-            if self.embeddings and len(self.embeddings) == len(documents):
+            if self.embeddings is not None and len(self.embeddings) == len(documents):
                 return self.embeddings
 
         return self.build_embeddings(documents)
@@ -68,6 +68,14 @@ def embed_text(text: str) -> None:
     print(f"Text: {text}")
     print(f"First 3 dimensions: {embedding[:3]}")
     print(f"Dimensions: {embedding.shape[0]}")
+
+
+def embed_query_text(query: str) -> None:
+    search_instance = SemanticSearch()
+    embedding = search_instance.generate_embedding(query)
+    print(f"Query: {query}")
+    print(f"First 3 dimensions: {embedding[:3]}")
+    print(f"Shape: {embedding.shape}")
 
 
 def verify_embeddings() -> None:

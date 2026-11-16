@@ -1,0 +1,13 @@
+{
+    "python.analysis.indexing": true,
+    "python.analysis.exclude": [
+        "**/node_modules",
+        "**/.venv",
+        "**/site-packages"
+    ],
+    "python.analysis.packageIndexDepths": [
+        { "name": "sentence_transformers", "depth": 1 },
+        { "name": "torch", "depth": 1 },
+        { "name": "transformers", "depth": 1 }
+    ]
+}

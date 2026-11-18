@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Any, TypedDict
 
 import numpy as np
@@ -6,8 +7,10 @@ from numpy.typing import NDArray
 from sentence_transformers import SentenceTransformer
 
 from .search_utils import (
+    DEFAULT_CHUNK_OVERLAP,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_SEARCH_LIMIT,
+    DEFAULT_SEMANTIC_CHUNK_SIZE,
     MOVIE_EMBEDDINGS_PATH,
     Movie,
     load_movies,
@@ -24,7 +27,7 @@ EmbeddingArray = NDArray[Any]
 
 
 class SemanticSearch:
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2", device: str ="cpu") -> None:
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2", device: str = "cpu") -> None:
         self.model = SentenceTransformer(model_name, device=device)
         self.embeddings: EmbeddingArray | None = None
         self.documents: list[Movie] | None = None
@@ -156,7 +159,11 @@ def semantic_search(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> None:
         print()
 
 
-def fixed_size_chunking(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE) -> list[str]:
+def fixed_size_chunking(
+    text: str,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    overlap: int = DEFAULT_CHUNK_OVERLAP,
+) -> list[str]:
     words = text.split()
     chunks = []
 
@@ -164,14 +171,50 @@ def fixed_size_chunking(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE) -> list
     i = 0
     while i < n_words:
         chunk_words = words[i : i + chunk_size]
+        if chunks and len(chunk_words) <= overlap:
+            break
+
         chunks.append(" ".join(chunk_words))
-        i += chunk_size
+        i += chunk_size - overlap
 
     return chunks
 
 
-def chunk_text(text: str, chunk_size: int = DEFAULT_CHUNK_SIZE) -> None:
-    chunks = fixed_size_chunking(text, chunk_size)
+def chunk_text(
+    text: str,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    overlap: int = DEFAULT_CHUNK_OVERLAP,
+) -> None:
+    chunks = fixed_size_chunking(text, chunk_size, overlap)
     print(f"Chunking {len(text)} characters")
+    for i, chunk in enumerate(chunks):
+        print(f"{i + 1}. {chunk}")
+
+
+def semantic_chunk(
+    text: str,
+    max_chunk_size: int = DEFAULT_SEMANTIC_CHUNK_SIZE,
+    overlap: int = DEFAULT_CHUNK_OVERLAP,
+) -> list[str]:
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    chunks = []
+    i = 0
+    n_sentences = len(sentences)
+    while i < n_sentences:
+        chunk_sentences = sentences[i : i + max_chunk_size]
+        if chunks and len(chunk_sentences) <= overlap:
+            break
+        chunks.append(" ".join(chunk_sentences))
+        i += max_chunk_size - overlap
+    return chunks
+
+
+def semantic_chunk_text(
+    text: str,
+    max_chunk_size: int = DEFAULT_SEMANTIC_CHUNK_SIZE,
+    overlap: int = DEFAULT_CHUNK_OVERLAP,
+) -> None:
+    chunks = semantic_chunk(text, max_chunk_size, overlap)
+    print(f"Semantically chunking {len(text)} characters")
     for i, chunk in enumerate(chunks):
         print(f"{i + 1}. {chunk}")

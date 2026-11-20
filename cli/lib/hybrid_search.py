@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Literal, TypedDict
 
@@ -15,6 +16,13 @@ from .search_utils import (
     load_movies,
 )
 from .semantic_search import ChunkedSemanticSearch
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 
 class CombinedScoreData(TypedDict):
@@ -253,22 +261,29 @@ def rrf_search_command(
     enhance: Literal["spell", "expand", "rewrite"] | None = None,
     rerank_method: Literal["individual", "batch", "cross_encoder"] | None = None,
     limit: int = DEFAULT_SEARCH_LIMIT,
+    evaluate: bool = False,
 ) -> RRFSearchCommandResult:
     movies = load_movies()
     searcher = HybridSearch(movies)
 
     original_query = query
+    logger.info("Original Query: %s", original_query)
     enhanced_query = None
     if enhance:
         enhanced_query = enhance_query(query, method=enhance)
+        logger.info("Enhanced Query: %s", enhanced_query)
         query = enhanced_query
 
     search_limit = limit * SEARCH_MULTIPLIER if rerank_method else limit
     results = searcher.rrf_search(query, k, search_limit)
+    logger.info("Results after RRF Search: %s", [movie["title"] for movie in results])
 
     reranked = False
     if rerank_method:
         results = rerank(query, results, method=rerank_method, limit=limit)
+        logger.info(
+            "Final Results after Re-Ranking: %s", [movie["title"] for movie in results]
+        )
         reranked = True
 
     return {

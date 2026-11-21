@@ -35,4 +35,4 @@ The dataset files (`data/*.json`) used during the course are intentionally exclu
 
 ## Acknowledgments
 
-Completed as part of [Learn Retrieval Augmented Generation](https://boot.dev) by Isaac Flath on Boot.dev.
+Completed as part of [Learn Retrieval Augmented Generation](https://www.boot.dev/courses/learn-retrieval-augmented-generation) by Isaac Flath on Boot.dev.
